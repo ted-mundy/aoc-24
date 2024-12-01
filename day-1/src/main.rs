@@ -1,43 +1,41 @@
-use std::{fs::File, io::{BufRead, BufReader}};
+use std::{error::Error, fs::File, io::{BufRead, BufReader}};
 
 fn main() {
     const FILE_PATH: &str = "src/data/lists.txt";
-    let (left_list, right_list) = get_lists(FILE_PATH).unwrap();
+    let list_result = get_lists(FILE_PATH);
+    let (left_list, right_list) = match list_result {
+        Ok(lists) => lists,
+        Err(e) => {
+            eprintln!("Error reading lists: {}", e);
+            return;
+        }
+    };
 
     let total_diff = get_list_diff(&left_list, &right_list);
-    println!("Total difference between lists: {}", total_diff);
-
     let total_similarity = get_list_similarity(&left_list, &right_list);
+
+    println!("Total difference between lists: {}", total_diff);
     println!("Total similarity between lists: {}", total_similarity);
 }
 
 /// Gets the two lists from the filepath specified. Sorts them, too.
-fn get_lists(filepath: &str) -> Result<(Vec<u32>, Vec<u32>), std::io::Error> {
-    let file_result = File::open(filepath);
-    if file_result.is_err() {
-        return Err(file_result.err().unwrap()); // we can unwrap here because we know it's an error. maybe there's a better way to do this?
-    }
-
-    let file = file_result.unwrap();
+fn get_lists(filepath: &str) -> Result<(Vec<u32>, Vec<u32>), Box<dyn Error>> {
+    let file = File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
 
     read_and_sort_lists(reader)
 }
 
-fn read_and_sort_lists(buf: BufReader<File>) -> Result<(Vec<u32>, Vec<u32>), std::io::Error> {
+fn read_and_sort_lists(buf: BufReader<File>) -> Result<(Vec<u32>, Vec<u32>), Box<dyn Error>> {
     let mut left_list: Vec<u32> = Vec::new();
     let mut right_list: Vec<u32> = Vec::new();
 
     for line in buf.lines() {
-        let line_result = line;
-        if line_result.is_err() {
-            return Err(line_result.err().unwrap());
-        }
-
-        let line = line_result.unwrap();
+        let line = line?;
         let mut split = line.split_whitespace();
-        let left = split.next().unwrap().parse::<u32>().unwrap();
-        let right = split.next().unwrap().parse::<u32>().unwrap();
+
+        let left = split.next().ok_or("No left value found")?.parse::<u32>()?;
+        let right = split.next().ok_or("No right value found")?.parse::<u32>()?;
 
         left_list.push(left);
         right_list.push(right);
