@@ -4,8 +4,11 @@ fn main() {
     const FILE_PATH: &str = "src/data/lists.txt";
     let (left_list, right_list) = get_lists(FILE_PATH).unwrap();
 
-    let total_diff = get_list_diff(left_list, right_list);
+    let total_diff = get_list_diff(&left_list, &right_list);
     println!("Total difference between lists: {}", total_diff);
+
+    let total_similarity = get_list_similarity(&left_list, &right_list);
+    println!("Total similarity between lists: {}", total_similarity);
 }
 
 /// Gets the two lists from the filepath specified. Sorts them, too.
@@ -46,7 +49,7 @@ fn read_and_sort_lists(buf: BufReader<File>) -> Result<(Vec<u32>, Vec<u32>), std
     Ok((left_list, right_list))
 }
 
-fn get_list_diff(left_list: Vec<u32>, right_list: Vec<u32>) -> u32 {
+fn get_list_diff(left_list: &Vec<u32>, right_list: &Vec<u32>) -> u32 {
     // the two arrays are sorted, and of the same length. so we can just iterate through it once, rather than
     // having to do a nested loop. this is O(n) rather than O(n^2). i think? could be wrong :^)
     let mut total_diff = 0;
@@ -56,4 +59,20 @@ fn get_list_diff(left_list: Vec<u32>, right_list: Vec<u32>) -> u32 {
     }
 
     total_diff as u32
+}
+
+fn get_list_similarity(left_list: &Vec<u32>, right_list: &Vec<u32>) -> u32 {
+    let mut total_similarity = 0;
+    for left in left_list {
+        let mut right_clones = 0;
+        for right in right_list {
+            if left == right {
+                right_clones += 1;
+            }
+        }
+
+        total_similarity += right_clones * left;
+    }
+
+    total_similarity
 }
